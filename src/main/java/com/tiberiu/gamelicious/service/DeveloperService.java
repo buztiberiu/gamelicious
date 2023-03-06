@@ -52,27 +52,28 @@ public class DeveloperService {
         developerRepository.deleteById(developerId);
     }
 
-    public void updateDeveloper(Long developerId, String name, String email) {
-        Developer developer = developerRepository.findById(developerId).orElseThrow(() -> new IllegalStateException(
-                "developer with id " + developerId + " does not exist"));
+    public void updateDeveloper(DeveloperDto developerDto) {
+        Developer developer = developerRepository.findById(developerDto.getId()).orElseThrow(() -> new IllegalStateException(
+                "developer with id " + developerDto.getId() + " does not exist"));
 
-        if (name != null && name.length() > 0 && !Objects.equals(developer.getName(), name)) {
-            Optional<Developer> developerOptional = developerRepository.findDeveloperByName(name);
+        if (developerDto.getName() != null && developerDto.getName().length() > 0 && !Objects.equals(developer.getName(), developerDto.getName())) {
+            Optional<Developer> developerOptional = developerRepository.findDeveloperByName(developerDto.getName());
             if (developerOptional.isPresent()) {
                 throw new IllegalStateException("name taken");
             }
-            developer.setName(name);
+            developer.setName(developerDto.getName());
         }
 
-        if (email != null && email.length() > 0 && !Objects.equals(developer.getEmail(), email)) {
-            Optional<Publisher> developerOptional = developerRepository.findPublisherByEmail(email);
+        if (developerDto.getEmail() != null && developerDto.getEmail().length() > 0 && !Objects.equals(developer.getEmail(), developerDto.getEmail())) {
+            Optional<Publisher> developerOptional = developerRepository.findPublisherByEmail(developerDto.getEmail());
             if (developerOptional.isPresent()) {
                 throw new IllegalStateException("email taken");
             }
-            developer.setEmail(email);
+            developer.setEmail(developerDto.getEmail());
         }
         developerRepository.save(developer);
     }
+
 }
 
 

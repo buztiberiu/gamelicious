@@ -36,8 +36,7 @@ public class DeveloperController {
 
     @PutMapping(path = "{developerId}")
     public void updateDeveloper(@PathVariable("developerId") Long developerId,
-                                @RequestParam(required = false) String name,
-                                @RequestParam(required = false) String email) {
-        developerService.updateDeveloper(developerId, name, email);
+                                @RequestBody DeveloperDto developerDto) {
+        developerService.updateDeveloper(developerDto);
     }
 }

@@ -15,4 +15,6 @@ public interface PublisherRepository extends JpaRepository<Publisher, Long> {
 
     @Query("SELECT s FROM Publisher s WHERE s.email = ?1")
     Optional<Publisher> findPublisherByEmail(String email);
+
+
 }

@@ -36,8 +36,7 @@ public class PublisherController {
 
     @PutMapping(path = "{publisherId}")
     public void updatePublisher(@PathVariable("publisherId") Long publisherId,
-                                @RequestParam(required = false) String name,
-                                @RequestParam(required = false) String email) {
-        publisherService.updatePublisher(publisherId, name, email);
+                                @RequestBody PublisherDto publisherDto) {
+        publisherService.updatePublisher(publisherDto);
     }
 }

@@ -1,5 +1,6 @@
 package com.tiberiu.gamelicious.service;
 
+import com.tiberiu.gamelicious.dto.GameDto;
 import com.tiberiu.gamelicious.dto.PublisherDto;
 import com.tiberiu.gamelicious.exception.PublisherNotFoundException;
 import com.tiberiu.gamelicious.mappers.PublisherMapper;
@@ -49,6 +50,7 @@ public class PublisherService {
             throw new IllegalStateException("publisher name taken");
         }
         List<Game> games = publisher.getPublishedGames();
+        //need to also do with list
 
         publisherRepository.save(publisher);
     }
@@ -61,25 +63,29 @@ public class PublisherService {
         publisherRepository.deleteById(publisherId);
     }
 
-    public void updatePublisher(Long publisherId, String name, String email) {
-        Publisher publisher = publisherRepository.findById(publisherId).orElseThrow(() -> new IllegalStateException(
-                        "publisher with id " + publisherId + " does not exist"));
+    public void updatePublisher(PublisherDto publisherDto) {
+        Publisher publisher = publisherRepository.findById(publisherDto.getId()).orElseThrow(() -> new IllegalStateException(
+                        "publisher with id " + publisherDto.getId() + " does not exist"));
 
-        if (name != null && name.length() > 0 && !Objects.equals(publisher.getName(), name)) {
-            Optional<Publisher> publisherOptional = publisherRepository.findPublisherByName(name);
+        if (publisherDto.getName() != null && publisherDto.getName().length() > 0 && !Objects.equals(publisher.getName(), publisherDto.getName())) {
+            Optional<Publisher> publisherOptional = publisherRepository.findPublisherByName(publisherDto.getName());
             if (publisherOptional.isPresent()) {
                 throw new IllegalStateException("name taken");
             }
-            publisher.setName(name);
+            publisher.setName(publisherDto.getName());
         }
 
-        if (email != null && email.length() > 0 && !Objects.equals(publisher.getEmail(), email)) {
-            Optional<Publisher> publisherOptional = publisherRepository.findPublisherByEmail(email);
+        if (publisherDto.getEmail() != null && publisherDto.getEmail().length() > 0 && !Objects.equals(publisher.getEmail(), publisherDto.getEmail())) {
+            Optional<Publisher> publisherOptional = publisherRepository.findPublisherByEmail(publisherDto.getEmail());
             if (publisherOptional.isPresent()) {
                 throw new IllegalStateException("email taken");
             }
-            publisher.setEmail(email);
+            publisher.setEmail(publisherDto.getEmail());
         }
         publisherRepository.save(publisher);
+    }
+    //method with add game in list
+    public void updatePublisherGames(GameDto gameDto) {
+
     }
 }

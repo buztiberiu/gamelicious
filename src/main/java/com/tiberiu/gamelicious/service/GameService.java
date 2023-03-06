@@ -1,5 +1,6 @@
 package com.tiberiu.gamelicious.service;
 
+import com.tiberiu.gamelicious.dto.FreeToGameDto;
 import com.tiberiu.gamelicious.dto.GameDto;
 import com.tiberiu.gamelicious.exception.GameNotFoundException;
 import com.tiberiu.gamelicious.mappers.GameMapper;
@@ -10,8 +11,11 @@ import com.tiberiu.gamelicious.repository.DeveloperRepository;
 import com.tiberiu.gamelicious.repository.GameRepository;
 import com.tiberiu.gamelicious.repository.PublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -57,12 +61,16 @@ public class GameService {
        }
 
        String publisherName = game.getPublisher().getName();
-       Optional<Publisher> optionalPublisher = publisherRepository.findPublisherByName(publisherName).or(() ->
-            Optional.of(publisherRepository.save(game.getPublisher())));
+       Optional<Publisher> publisher = publisherRepository.findPublisherByName(publisherName).or(() ->
+               Optional.of(publisherRepository.save(game.getPublisher())));
+//       game.setPublisher(publisher.get());
+       publisher.get().addGameToPublishedGames(game);
 
        String developerName = game.getDeveloper().getName();
-       Optional<Developer> developerOptional = developerRepository.findDeveloperByName(developerName).or(() ->
+       Optional<Developer> developer = developerRepository.findDeveloperByName(developerName).or(() ->
                Optional.of(developerRepository.save(game.getDeveloper())));
+//       game.setDeveloper(developer.get());
+       developer.get().addGameToDevelopedGames(game);
 
        gameRepository.save(game);
    }
@@ -75,31 +83,82 @@ public class GameService {
         gameRepository.deleteById(gameId);
    }
 
-   public void updateGame(Long gameId, String name, Integer userReviews, Integer criticsReviews, LocalDate releaseDate) {
-        Game game = gameRepository.findById(gameId).orElseThrow(() -> new IllegalStateException(
-                "game with id " + gameId + " does not exist"
+   public GameDto updateGame(GameDto gameDto) {
+        Game game = gameRepository.findById(gameDto.getId()).orElseThrow(() -> new IllegalStateException(
+                "game with id " + gameDto.getId() + " does not exist"
         ));
 
-        if (name != null && name.length() > 0 && !Objects.equals(game.getName(), name)) {
-            Optional<Game> optionalGame = gameRepository.findGameByName(name);
+        if (gameDto.getName() != null && gameDto.getName().length() > 0 && !Objects.equals(game.getName(), gameDto.getName())) {
+            Optional<Game> optionalGame = gameRepository.findGameByName(gameDto.getName());
             if (optionalGame.isPresent()) {
                 throw new IllegalStateException("game name taken");
             }
-            game.setName(name);
+            game.setName(gameDto.getName());
         }
 
-        if (userReviews != null && userReviews >= 0 && !Objects.equals(game.getUserReviews(), userReviews)) {
-            game.setUserReviews(userReviews);
+        if (gameDto.getUserReviews() != null && gameDto.getUserReviews() >= 0 && !Objects.equals(game.getUserReviews(), gameDto.getUserReviews())) {
+            game.setUserReviews(gameDto.getUserReviews());
         }
 
-       if (criticsReviews != null && criticsReviews >= 0 && !Objects.equals(game.getCriticsReviews(), criticsReviews)) {
-           game.setCriticsReviews(criticsReviews);
+       if (gameDto.getCriticsReviews() != null && gameDto.getCriticsReviews() >= 0 && !Objects.equals(game.getCriticsReviews(), gameDto.getCriticsReviews())) {
+           game.setCriticsReviews(gameDto.getCriticsReviews());
        }
 
-       if (releaseDate != null && !Objects.equals(game.getReleaseDate(), releaseDate)) {
-           game.setReleaseDate(releaseDate);
+       if (gameDto.getReleaseDate() != null && !Objects.equals(game.getReleaseDate(), gameDto.getReleaseDate())) {
+           game.setReleaseDate(gameDto.getReleaseDate());
        }
-       gameRepository.save(game);
+       return GameMapper.convert(gameRepository.save(game));
    }
+
+   public FreeToGameDto[] fetchFreeToGames(String provider) {
+
+       RestTemplate restTemplate = new RestTemplate();
+       String fooResourceUrl = "https://www.freetogame.com/api/games";
+       ResponseEntity<FreeToGameDto[]> response = restTemplate.getForEntity(fooResourceUrl, FreeToGameDto[].class);
+
+        if (provider.equals("rawg")) {
+            return null;
+        }
+
+        if (provider.equals("freetogame")) {
+            return response.getBody();
+        }
+        return null;
+   }
+
+   public void addGamesFromFreeToGame() {
+
+       RestTemplate restTemplate = new RestTemplate();
+       String fooResourceUrl = "https://www.freetogame.com/api/games";
+       ResponseEntity<FreeToGameDto[]> response = restTemplate.getForEntity(fooResourceUrl, FreeToGameDto[].class);
+       FreeToGameDto[] freeToGameDtos = response.getBody();
+
+       if (freeToGameDtos != null) {
+           for (FreeToGameDto freeToGameDto : freeToGameDtos) {
+                Game game = new Game();
+                game.setName(freeToGameDto.getTitle());
+                try {
+                    game.setReleaseDate(LocalDate.parse(freeToGameDto.getRelease_date()));
+                } catch (DateTimeException e) {
+                    game.setReleaseDate(null);
+                }
+
+                Publisher publisher = new Publisher();
+                publisher.setName(freeToGameDto.getPublisher());
+                game.setPublisher(publisher);
+
+                Developer developer = new Developer();
+                developer.setName(freeToGameDto.getDeveloper());
+                game.setDeveloper(developer);
+
+                addNewGame(game);
+           }
+       }
+   }
+
+   //posturile si puturile trb sa returneze obiecte dto
+    //body ul care il primesc la response, sa iau informatiile din body sa le salvez
+    //in baza mea de date, nu trb sa salvez intr-un string ci intr-un array de elemente,
+    //apoi sa convertesc astea in gamedto si apoi salvate in baza de date.
 }
 

@@ -2,6 +2,7 @@ package com.tiberiu.gamelicious.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,8 +21,8 @@ public class Developer {
 
     @OneToMany(mappedBy = "developer",
             cascade = CascadeType.ALL,
-            orphanRemoval = false)
-    List<Game> developedGames;
+            orphanRemoval = true) //was false
+    private List<Game> developedGames = new ArrayList<>();
 
     public Developer() {
     }
@@ -56,5 +57,15 @@ public class Developer {
 
     public void setDevelopedGames(List<Game> developedGames) {
         this.developedGames = developedGames;
+    }
+
+    public void addGameToDevelopedGames(Game game) {
+        this.developedGames.add(game);
+        game.setDeveloper(this);
+    }
+
+    public void removeGameFromDevelopedGames(Game game) {
+        this.developedGames.remove(game);
+        game.setDeveloper(null);
     }
 }

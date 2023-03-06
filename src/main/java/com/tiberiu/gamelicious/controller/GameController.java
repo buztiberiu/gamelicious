@@ -1,12 +1,12 @@
 package com.tiberiu.gamelicious.controller;
 
+import com.tiberiu.gamelicious.dto.FreeToGameDto;
 import com.tiberiu.gamelicious.dto.GameDto;
 import com.tiberiu.gamelicious.model.Game;
 import com.tiberiu.gamelicious.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -37,10 +37,19 @@ public class GameController {
 
     @PutMapping(path = "{gameId}")
     public void updateGame(@PathVariable("gameId") Long gameId,
-                           @RequestParam(required = false) String name,
-                           @RequestParam(required = false) Integer userReviews,
-                           @RequestParam(required = false) Integer criticsReviews,
-                           @RequestParam(required = false)LocalDate releaseDate) {
-        gameService.updateGame(gameId, name, userReviews, criticsReviews, releaseDate);
+                           @RequestBody GameDto gameDto) {
+        gameService.updateGame(gameDto);
     }
+
+    @GetMapping(path = "/fetch/{provider}")
+    public FreeToGameDto[] getFreeToGames(@PathVariable("provider") String provider) {
+        return gameService.fetchFreeToGames(provider);
+    }
+
+    @PostMapping(path = "/fetch/{provider}")
+    public void addFreeToGames() {
+        gameService.addGamesFromFreeToGame();
+    }
+
+
 }
