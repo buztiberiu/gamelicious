@@ -19,10 +19,10 @@ public class Game {
     private LocalDate releaseDate;
 
     @Column
-    private Integer userReviews;
+    private Double userReviews;
 
     @Column
-    private Integer criticsReviews;
+    private Double criticsReviews;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Publisher publisher;
@@ -39,7 +39,7 @@ public class Game {
         this.releaseDate = releaseDate;
     }
 
-    public Game(String name, LocalDate releaseDate, Integer userReviews, Integer criticsReviews, Publisher publisher, Developer developer) {
+    public Game(String name, LocalDate releaseDate, Double userReviews, Double criticsReviews, Publisher publisher, Developer developer) {
         this.name = name;
         this.releaseDate = releaseDate;
         this.userReviews = userReviews;
@@ -72,19 +72,19 @@ public class Game {
         this.releaseDate = releaseDate;
     }
 
-    public Integer getUserReviews() {
+    public Double getUserReviews() {
         return userReviews;
     }
 
-    public void setUserReviews(Integer userReviews) {
+    public void setUserReviews(Double userReviews) {
         this.userReviews = userReviews;
     }
 
-    public Integer getCriticsReviews() {
+    public Double getCriticsReviews() {
         return criticsReviews;
     }
 
-    public void setCriticsReviews(Integer criticsReviews) {
+    public void setCriticsReviews(Double criticsReviews) {
         this.criticsReviews = criticsReviews;
     }
 

@@ -2,6 +2,7 @@ package com.tiberiu.gamelicious.controller;
 
 import com.tiberiu.gamelicious.dto.FreeToGameDto;
 import com.tiberiu.gamelicious.dto.GameDto;
+import com.tiberiu.gamelicious.dto.RawgDto;
 import com.tiberiu.gamelicious.model.Game;
 import com.tiberiu.gamelicious.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +47,19 @@ public class GameController {
         return gameService.fetchFreeToGames(provider);
     }
 
+    @GetMapping(path = "/fetch2/{provider}")
+    public RawgDto getRawg(@PathVariable("provider") String provider) {
+        return gameService.fetchRawg(provider);
+    }
+
     @PostMapping(path = "/fetch/{provider}")
     public void addFreeToGames() {
         gameService.addGamesFromFreeToGame();
     }
 
+    @PostMapping(path = "/fetch2/{provider}")
+    public void addRawgDevelopers() {
+        gameService.addRawgDevelopers();
+    }
 
 }

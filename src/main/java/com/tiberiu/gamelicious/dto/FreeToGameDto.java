@@ -1,5 +1,8 @@
 package com.tiberiu.gamelicious.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeToGameDto {
 
     private Long id;

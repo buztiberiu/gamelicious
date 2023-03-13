@@ -84,7 +84,7 @@ public class PublisherService {
         }
         publisherRepository.save(publisher);
     }
-    //method with add game in list
+
     public void updatePublisherGames(GameDto gameDto) {
 
     }

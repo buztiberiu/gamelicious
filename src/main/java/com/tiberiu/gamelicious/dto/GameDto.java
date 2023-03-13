@@ -1,14 +1,17 @@
 package com.tiberiu.gamelicious.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDate;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GameDto {
 
     private Long id;
     private String name;
     private LocalDate releaseDate;
-    private Integer userReviews;
-    private Integer criticsReviews;
+    private Double userReviews;
+    private Double criticsReviews;
     private PublisherDto publisherDto;
     private DeveloperDto developerDto;
 
@@ -36,19 +39,19 @@ public class GameDto {
         this.releaseDate = releaseDate;
     }
 
-    public Integer getUserReviews() {
+    public Double getUserReviews() {
         return userReviews;
     }
 
-    public void setUserReviews(Integer userReviews) {
+    public void setUserReviews(Double userReviews) {
         this.userReviews = userReviews;
     }
 
-    public Integer getCriticsReviews() {
+    public Double getCriticsReviews() {
         return criticsReviews;
     }
 
-    public void setCriticsReviews(Integer criticsReviews) {
+    public void setCriticsReviews(Double criticsReviews) {
         this.criticsReviews = criticsReviews;
     }
 
