@@ -39,4 +39,9 @@ public class PublisherController {
                                 @RequestBody PublisherDto publisherDto) {
         publisherService.updatePublisher(publisherDto);
     }
+
+    @PostMapping(path = "/fetch/{provider}")
+    public void addRawgPublishers() {
+        publisherService.addRawgPublishers();
+    }
 }

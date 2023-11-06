@@ -1,13 +1,20 @@
 package com.tiberiu.gamelicious.service;
 
 import com.tiberiu.gamelicious.dto.DeveloperDto;
+import com.tiberiu.gamelicious.dto.GameDto;
+import com.tiberiu.gamelicious.dto.RawgDto;
+import com.tiberiu.gamelicious.dto.RawgGameDto;
 import com.tiberiu.gamelicious.exception.DeveloperNotFoundException;
 import com.tiberiu.gamelicious.mappers.DeveloperMapper;
 import com.tiberiu.gamelicious.model.Developer;
+import com.tiberiu.gamelicious.model.Game;
 import com.tiberiu.gamelicious.model.Publisher;
 import com.tiberiu.gamelicious.repository.DeveloperRepository;
+import com.tiberiu.gamelicious.repository.GameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,11 +23,17 @@ import java.util.Optional;
 @Service
 public class DeveloperService {
 
+    public static final String RAWGDEVELOPERS_URL = "https://api.rawg.io/api/developers?key=6ba20560f8b54e1095fab5945ca7ca2d";
+
     @Autowired
     private final DeveloperRepository developerRepository;
 
-    public DeveloperService(DeveloperRepository developerRepository) {
+    @Autowired
+    private final GameRepository gameRepository;
+
+    public DeveloperService(DeveloperRepository developerRepository, GameRepository gameRepository) {
         this.developerRepository = developerRepository;
+        this.gameRepository = gameRepository;
     }
 
     public DeveloperDto getOneDeveloper(String name) throws DeveloperNotFoundException {
@@ -71,6 +84,48 @@ public class DeveloperService {
             }
             developer.setEmail(developerDto.getEmail());
         }
+        developerRepository.save(developer);
+    }
+
+    public void addRawgDevelopers() {
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<RawgDto> responseRawgDevelopers = restTemplate.getForEntity(RAWGDEVELOPERS_URL, RawgDto.class);
+        RawgDto developersRawg = responseRawgDevelopers.getBody();
+
+        if (developersRawg != null) {
+            RawgGameDto[] rawgDevelopers = developersRawg.getResults();
+            for (RawgGameDto rawgDev : rawgDevelopers) {
+
+                for (GameDto gameDto : rawgDev.getGames()) {
+                    Optional<Game> gameByName = gameRepository.findGameByName(gameDto.getName());
+                    if (gameByName.isEmpty()) {
+                        Game game = new Game();
+                        game.setName(gameDto.getName());
+                        Optional<Developer> developerOptional = developerRepository.findDeveloperByName(rawgDev.getName());
+                        if (developerOptional.isPresent()) {
+                            if (developerOptional.get().getBackgroundImageUrl() == null) {
+                                developerOptional.get().setBackgroundImageUrl(rawgDev.getImage_background());
+                            }
+                            developerOptional.get().addGameToDevelopedGames(game);
+                        } else {
+                            createDeveloper(rawgDev.getName(), rawgDev.getImage_background(), game);
+                        }
+                    } else {
+                        if (gameByName.get().getDeveloper() == null) {
+                            createDeveloper(rawgDev.getName(), rawgDev.getImage_background(), gameByName.get());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void createDeveloper(String name, String backgroundImage, Game game) {
+        Developer developer = new Developer();
+        developer.setName(name);
+        developer.setBackgroundImageUrl(backgroundImage);
+        developer.addGameToDevelopedGames(game);
         developerRepository.save(developer);
     }
 

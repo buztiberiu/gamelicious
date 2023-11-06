@@ -39,4 +39,9 @@ public class DeveloperController {
                                 @RequestBody DeveloperDto developerDto) {
         developerService.updateDeveloper(developerDto);
     }
+
+    @PostMapping(path = "/fetch/{provider}")
+    public void addRawgDevelopers() {
+        developerService.addRawgDevelopers();
+    }
 }

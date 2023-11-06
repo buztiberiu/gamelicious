@@ -3,9 +3,8 @@ package com.tiberiu.gamelicious.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FreeToGameDto {
+public class FreeToGameDto extends BaseGameDto {
 
-    private Long id;
     private String title;
     private String thumbnail;
     private String short_description;
@@ -16,14 +15,6 @@ public class FreeToGameDto {
     private String developer;
     private String release_date;
     private String freetogame_profile_url;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getTitle() {
         return title;
