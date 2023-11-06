@@ -10,8 +10,12 @@ public class GameDto {
     private Long id;
     private String name;
     private LocalDate releaseDate;
+    private String genre;
+    private String shortDescription;
     private Double userReviews;
     private Double criticsReviews;
+    private String backgroundImageUrl;
+
     private PublisherDto publisherDto;
     private DeveloperDto developerDto;
 
@@ -55,6 +59,14 @@ public class GameDto {
         this.criticsReviews = criticsReviews;
     }
 
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl = backgroundImageUrl;
+    }
+
     public PublisherDto getPublisherDto() {
         return publisherDto;
     }
@@ -69,5 +81,21 @@ public class GameDto {
 
     public void setDeveloperDto(DeveloperDto developerDto) {
         this.developerDto = developerDto;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getShortDescription() {
+        return shortDescription;
+    }
+
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
     }
 }

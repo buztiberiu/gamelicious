@@ -14,4 +14,5 @@ public class RawgDto {
     public void setResults(RawgGameDto[] results) {
         this.results = results;
     }
+
 }

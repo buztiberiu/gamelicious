@@ -17,6 +17,9 @@ public class Developer {
     private String name;
 
     @Column
+    private String backgroundImageUrl;
+
+    @Column
     private String email;
 
     @OneToMany(mappedBy = "developer",
@@ -41,6 +44,14 @@ public class Developer {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl = backgroundImageUrl;
     }
 
     public String getEmail() {

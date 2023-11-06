@@ -3,26 +3,17 @@ package com.tiberiu.gamelicious.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RawgGameDto {
+public class RawgGameDto extends BaseGameDto {
 
-    private Long id;
     private String name;
     private String released;
     private boolean tba;
     private Double rating;
     private Double rating_top;
-
-    //For Publishers & Developers
+    private String image_background;
     private GameDto[] games;
     private Integer games_count;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private String background_image;
 
     public String getName() {
         return name;
@@ -80,5 +71,21 @@ public class RawgGameDto {
 
     public void setGames_count(Integer games_count) {
         this.games_count = games_count;
+    }
+
+    public String getImage_background() {
+        return image_background;
+    }
+
+    public void setImage_background(String image_background) {
+        this.image_background = image_background;
+    }
+
+    public String getBackground_image() {
+        return background_image;
+    }
+
+    public void setBackground_image(String background_image) {
+        this.background_image = background_image;
     }
 }

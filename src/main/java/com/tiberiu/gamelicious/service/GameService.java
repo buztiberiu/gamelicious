@@ -1,10 +1,8 @@
 package com.tiberiu.gamelicious.service;
 
-import com.tiberiu.gamelicious.dto.FreeToGameDto;
-import com.tiberiu.gamelicious.dto.GameDto;
-import com.tiberiu.gamelicious.dto.RawgDto;
-import com.tiberiu.gamelicious.dto.RawgGameDto;
+import com.tiberiu.gamelicious.dto.*;
 import com.tiberiu.gamelicious.exception.GameNotFoundException;
+import com.tiberiu.gamelicious.exception.InvalidProvider;
 import com.tiberiu.gamelicious.mappers.GameMapper;
 import com.tiberiu.gamelicious.model.Developer;
 import com.tiberiu.gamelicious.model.Game;
@@ -19,10 +17,19 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class GameService {
+
+    public static final String FREETOGAMES_URL = "https://www.freetogame.com/api/games";
+    public static final String RAWGGAMES_URL = "https://api.rawg.io/api/games?key=6ba20560f8b54e1095fab5945ca7ca2d";
+
+    @Autowired
+    private final RestTemplate restTemplate;
 
     @Autowired
     private final GameRepository gameRepository;
@@ -33,16 +40,13 @@ public class GameService {
     @Autowired
     private final DeveloperRepository developerRepository;
 
-    @Autowired
-    private final DeveloperService developerService;
-
-    public GameService(GameRepository gameRepository,
+    public GameService(RestTemplate restTemplate, GameRepository gameRepository,
                        PublisherRepository publisherRepository,
-                       DeveloperRepository developerRepository, DeveloperService developerService) {
+                       DeveloperRepository developerRepository) {
+        this.restTemplate = restTemplate;
         this.gameRepository = gameRepository;
         this.developerRepository = developerRepository;
         this.publisherRepository = publisherRepository;
-        this.developerService = developerService;
     }
 
     public GameDto getOneGame(String name) throws GameNotFoundException {
@@ -58,25 +62,27 @@ public class GameService {
         return GameMapper.convert(gameRepository.findAll());
     }
 
-    public void addNewGame(Game game) {
+    public GameDto addNewGame(Game game) {
         Optional<Game> gameByName = gameRepository.findGameByName(game.getName());
         if (gameByName.isPresent()) {
             throw new IllegalStateException("game name taken");
         }
 
-        String publisherName = game.getPublisher().getName();
-        Optional<Publisher> publisher = publisherRepository.findPublisherByName(publisherName).or(() ->
-                Optional.of(publisherRepository.save(game.getPublisher())));
-//       game.setPublisher(publisher.get());
-        publisher.get().addGameToPublishedGames(game);
+        if (game.getPublisher() != null) {
+            String publisherName = game.getPublisher().getName();
+            Optional<Publisher> publisher = publisherRepository.findPublisherByName(publisherName).or(() ->
+                    Optional.of(publisherRepository.save(game.getPublisher())));
+            publisher.get().addGameToPublishedGames(game);
+        }
 
-        String developerName = game.getDeveloper().getName();
-        Optional<Developer> developer = developerRepository.findDeveloperByName(developerName).or(() ->
-                Optional.of(developerRepository.save(game.getDeveloper())));
-//       game.setDeveloper(developer.get());
-        developer.get().addGameToDevelopedGames(game);
+        if (game.getDeveloper() != null) {
+            String developerName = game.getDeveloper().getName();
+            Optional<Developer> developer = developerRepository.findDeveloperByName(developerName).or(() ->
+                    Optional.of(developerRepository.save(game.getDeveloper())));
+            developer.get().addGameToDevelopedGames(game);
+        }
 
-        gameRepository.save(game);
+        return GameMapper.convert(gameRepository.save(game));
     }
 
     public void deleteGame(Long gameId) {
@@ -87,8 +93,8 @@ public class GameService {
         gameRepository.deleteById(gameId);
     }
 
-    public GameDto updateGame(GameDto gameDto) {
-        Game game = gameRepository.findById(gameDto.getId()).orElseThrow(() -> new IllegalStateException(
+    public GameDto updateGame(Long gameId, GameDto gameDto) {
+        Game game = gameRepository.findById(gameId).orElseThrow(() -> new IllegalStateException(
                 "game with id " + gameDto.getId() + " does not exist"
         ));
 
@@ -111,111 +117,79 @@ public class GameService {
         if (gameDto.getReleaseDate() != null && !Objects.equals(game.getReleaseDate(), gameDto.getReleaseDate())) {
             game.setReleaseDate(gameDto.getReleaseDate());
         }
+
+        if (gameDto.getBackgroundImageUrl() != null && !Objects.equals(game.getBackgroundImageUrl(), gameDto.getBackgroundImageUrl())) {
+            game.setBackgroundImageUrl(gameDto.getBackgroundImageUrl());
+        }
         return GameMapper.convert(gameRepository.save(game));
     }
 
-    public FreeToGameDto[] fetchFreeToGames(String provider) {
+    private FreeToGameDto[] fetchFreeToGames() {
 
-        RestTemplate restTemplate = new RestTemplate();
-        String freeToGameUrl = "https://www.freetogame.com/api/games";
-        ResponseEntity<FreeToGameDto[]> responseFreeToGames = restTemplate.getForEntity(freeToGameUrl, FreeToGameDto[].class);
-
+        ResponseEntity<FreeToGameDto[]> responseFreeToGames = restTemplate.getForEntity(FREETOGAMES_URL, FreeToGameDto[].class);
         return responseFreeToGames.getBody();
     }
 
-    public RawgDto fetchRawg(String provider) {
+    private RawgGameDto[] fetchRawg() {
 
-        RestTemplate restTemplate = new RestTemplate();
-        String rawgGamesUrl = "https://api.rawg.io/api/games?key=6ba20560f8b54e1095fab5945ca7ca2d";
-        ResponseEntity<RawgDto> responseRawgGames = restTemplate.getForEntity(rawgGamesUrl, RawgDto.class);
-
-        return responseRawgGames.getBody();
+        ResponseEntity<RawgDto> responseRawgGames = restTemplate.getForEntity(RAWGGAMES_URL, RawgDto.class);
+        return Objects.requireNonNull(responseRawgGames.getBody()).getResults();
     }
 
-    public void addRawgDevelopers() {
+    public BaseGameDto[] fetchGames(String provider) throws InvalidProvider {
 
-        RestTemplate restTemplate = new RestTemplate();
-        String rawgDevelopersUrl = "https://api.rawg.io/api/developers?key=6ba20560f8b54e1095fab5945ca7ca2d";
-        ResponseEntity<RawgDto> responseRawgDevelopers = restTemplate.getForEntity(rawgDevelopersUrl, RawgDto.class);
-        RawgDto developersRawg = responseRawgDevelopers.getBody();
+        BaseGameDto[] baseGameDto;
 
-        if (developersRawg != null) {
-            RawgGameDto[] rawgDevelopers = developersRawg.getResults();
-            for (RawgGameDto rawgDev : rawgDevelopers) {
-//                List<Game> gameList = new ArrayList<>();
-                for (GameDto gameDto : rawgDev.getGames()) {
-                    Optional<Game> gameByName = gameRepository.findGameByName(gameDto.getName());
-                    if (gameByName.isEmpty()) {
-                        Game game = new Game();
-                        game.setName(gameDto.getName());
-//                        gameList.add(game);
-                        Optional<Developer> developerOptional = developerRepository.findDeveloperByName(rawgDev.getName());
-                        if (developerOptional.isPresent()) {
-                            developerOptional.get().addGameToDevelopedGames(game);
-                        } else {
-                            Developer developer = new Developer();
-                            developer.setName(rawgDev.getName());
-                            developer.addGameToDevelopedGames(game);
-                            developerRepository.save(developer);
-                        }
-                    } else {
-                        if (gameByName.get().getDeveloper() == null) {
-                            Developer developer = new Developer();
-                            developer.setName(rawgDev.getName());
-                            developer.addGameToDevelopedGames(gameByName.get());
-                            developerRepository.save(developer);
-                        }
-                    }
-                }
-            }
+        if (provider.equalsIgnoreCase("freetogame")) {
+            baseGameDto = fetchFreeToGames();
+        } else if (provider.equalsIgnoreCase("rawg")) {
+            baseGameDto = fetchRawg();
+        } else {
+            throw new InvalidProvider("Invalid Provider");
         }
+
+        return baseGameDto;
     }
 
-    public void addRawgPublishers() {
+    public List<GameDto> updateGamesRawg() {
 
-        RestTemplate restTemplate = new RestTemplate();
-        String rawgPublishersUrl = "https://api.rawg.io/api/publishers?key=6ba20560f8b54e1095fab5945ca7ca2d";
-        ResponseEntity<RawgDto> responseRawgPublishers = restTemplate.getForEntity(rawgPublishersUrl, RawgDto.class);
-        RawgDto publishersRawg = responseRawgPublishers.getBody();
-
-        if (publishersRawg != null) {
-            RawgGameDto[] rawgPublishers = publishersRawg.getResults();
-        }
-    }
-
-    public void updateGamesFromRawg() {
-
-        RestTemplate restTemplate = new RestTemplate();
-        String rawgGamesUrl = "https://api.rawg.io/api/games?key=6ba20560f8b54e1095fab5945ca7ca2d";
-        ResponseEntity<RawgDto> responseRawgGames = restTemplate.getForEntity(rawgGamesUrl, RawgDto.class);
+        ResponseEntity<RawgDto> responseRawgGames = restTemplate.getForEntity(RAWGGAMES_URL, RawgDto.class);
         RawgDto rawgDto = responseRawgGames.getBody();
+        List<GameDto> gameDtos = new ArrayList<>();
 
         if (rawgDto != null) {
             RawgGameDto[] rawgGameDtos = rawgDto.getResults();
             for (RawgGameDto rawgGameDto : rawgGameDtos) {
                 Optional<Game> optionalGame = gameRepository.findGameByName(rawgGameDto.getName());
                 if (optionalGame.isPresent()) {
-                    optionalGame.get().setReleaseDate(LocalDate.parse(rawgGameDto.getReleased()));
-                    optionalGame.get().setUserReviews(rawgGameDto.getRating());
+                    Game game = optionalGame.get();
+                    game.setBackgroundImageUrl(rawgGameDto.getBackground_image());
+                    game.setReleaseDate(LocalDate.parse(rawgGameDto.getReleased()));
+                    game.setUserReviews(rawgGameDto.getRating());
+                    gameRepository.save(game);
+                    gameDtos.add(GameMapper.convert(game));
                 } else {
-                    Game createdGame = new Game();
-                    createdGame.setReleaseDate(LocalDate.parse(rawgGameDto.getReleased()));
-                    createdGame.setUserReviews(rawgGameDto.getRating());
-                    addNewGame(createdGame);
+                    gameDtos.add(createGame(rawgGameDto.getReleased(),
+                            rawgGameDto.getRating(), rawgGameDto.getBackground_image()));
                 }
             }
         }
+        return gameDtos;
     }
 
-    public void addGamesFromFreeToGame() {
+    public List<GameDto> addGamesFromFreeToGame() {
 
-        RestTemplate restTemplate = new RestTemplate();
-        String fooResourceUrl = "https://www.freetogame.com/api/games";
-        ResponseEntity<FreeToGameDto[]> response = restTemplate.getForEntity(fooResourceUrl, FreeToGameDto[].class);
+        ResponseEntity<FreeToGameDto[]> response = restTemplate.getForEntity(FREETOGAMES_URL, FreeToGameDto[].class);
         FreeToGameDto[] freeToGameDto = response.getBody();
+        List<GameDto> gameDtos = new ArrayList<>();
 
         if (freeToGameDto != null) {
             for (FreeToGameDto gameDto : freeToGameDto) {
+
+                if (gameRepository.findGameByName(gameDto.getTitle()).isPresent()) {
+                    continue;
+                }
+
                 Game game = new Game();
                 game.setName(gameDto.getTitle());
                 try {
@@ -223,36 +197,57 @@ public class GameService {
                 } catch (DateTimeException e) {
                     game.setReleaseDate(null);
                 }
+                game.setBackgroundImageUrl(gameDto.getThumbnail());
+                game.setGenre(gameDto.getGenre());
 
-                Publisher publisher = new Publisher();
-                publisher.setName(gameDto.getPublisher());
-                game.setPublisher(publisher);
+                if (gameDto.getShort_description().length() >= 255) {
+                    game.setShortDescription(gameDto.getShort_description().substring(0,255));
+                } else {
+                    game.setShortDescription(gameDto.getShort_description());
+                }
 
-                Developer developer = new Developer();
-                developer.setName(gameDto.getDeveloper());
-                game.setDeveloper(developer);
+                Optional<Publisher> publisherOptional = publisherRepository.findPublisherByName(gameDto.getPublisher());
+                if (publisherOptional.isEmpty()) {
+                    Publisher publisher = new Publisher();
+                    publisher.setName(gameDto.getPublisher());
+                    game.setPublisher(publisher);
+                }
 
+                Optional<Developer> developerOptional = developerRepository.findDeveloperByName(gameDto.getDeveloper());
+                if (developerOptional.isEmpty()) {
+                    Developer developer = new Developer();
+                    developer.setName(gameDto.getDeveloper());
+                    game.setDeveloper(developer);
+                }
+
+                gameDtos.add(GameMapper.convert(game));
                 addNewGame(game);
             }
         }
+        return gameDtos;
     }
 
-    public List<GameDto> addGamesIfNotInRepository(List<GameDto> games) {
-        List<GameDto> gameDtoList = new ArrayList<>();
-        for (GameDto gameDto : games) {
-            Optional<Game> gameByName = gameRepository.findGameByName(gameDto.getName());
-            if (gameByName.isEmpty()) {
-                Game game = new Game();
-                game.setName(gameDto.getName());
-                gameDtoList.add(GameMapper.convert(game));
-            }
+    public List<GameDto> addGamesFromProvider(String provider) throws InvalidProvider {
+
+        List<GameDto> gameDtos;
+
+        if (provider.equalsIgnoreCase("freetogame")) {
+            gameDtos = addGamesFromFreeToGame();
+        } else if (provider.equalsIgnoreCase("rawg")) {
+            gameDtos = updateGamesRawg();
+        } else {
+            throw new InvalidProvider("Invalid Provider");
         }
-        return gameDtoList;
+
+        return gameDtos;
     }
 
-    //posturile si puturile trb sa returneze obiecte dto
-    //body ul care il primesc la response, sa iau informatiile din body sa le salvez
-    //in baza mea de date, nu trb sa salvez intr-un string ci intr-un array de elemente,
-    //apoi sa convertesc astea in gamedto si apoi salvate in baza de date.
+    private GameDto createGame(String releaseDate, Double rating, String backgroundImage) {
+        Game createdGame = new Game();
+        createdGame.setReleaseDate(LocalDate.parse(releaseDate));
+        createdGame.setUserReviews(rating);
+        createdGame.setBackgroundImageUrl(backgroundImage);
+        return addNewGame(createdGame);
+    }
 }
 

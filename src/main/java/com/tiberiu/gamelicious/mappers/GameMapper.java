@@ -14,11 +14,18 @@ public class GameMapper {
         gameDto.setId(game.getId());
         gameDto.setName(game.getName());
         gameDto.setReleaseDate(game.getReleaseDate());
+        gameDto.setGenre(game.getGenre());
         gameDto.setUserReviews(game.getUserReviews());
         gameDto.setCriticsReviews(game.getUserReviews());
+        gameDto.setBackgroundImageUrl(game.getBackgroundImageUrl());
 
-        gameDto.setPublisherDto(PublisherMapper.convert(game.getPublisher()));
-        gameDto.setDeveloperDto(DeveloperMapper.convert(game.getDeveloper()));
+        if (game.getPublisher() != null) {
+            gameDto.setPublisherDto(PublisherMapper.convert(game.getPublisher()));
+        }
+
+        if (game.getDeveloper() != null) {
+            gameDto.setDeveloperDto(DeveloperMapper.convert(game.getDeveloper()));
+        }
 
         return gameDto;
     }

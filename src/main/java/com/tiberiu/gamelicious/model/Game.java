@@ -19,10 +19,19 @@ public class Game {
     private LocalDate releaseDate;
 
     @Column
+    private String genre;
+
+    @Column
+    private String shortDescription;
+
+    @Column
     private Double userReviews;
 
     @Column
     private Double criticsReviews;
+
+    @Column
+    private String backgroundImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Publisher publisher;
@@ -39,13 +48,18 @@ public class Game {
         this.releaseDate = releaseDate;
     }
 
-    public Game(String name, LocalDate releaseDate, Double userReviews, Double criticsReviews, Publisher publisher, Developer developer) {
+    public Game(String name, LocalDate releaseDate, Double userReviews, Double criticsReviews,
+                Publisher publisher, Developer developer, String genre, String shortDescription,
+                String backgroundImageUrl) {
         this.name = name;
         this.releaseDate = releaseDate;
         this.userReviews = userReviews;
         this.criticsReviews = criticsReviews;
         this.publisher = publisher;
         this.developer = developer;
+        this.genre = genre;
+        this.shortDescription = shortDescription;
+        this.backgroundImageUrl = backgroundImageUrl;
     }
 
     public Long getId() {
@@ -72,6 +86,22 @@ public class Game {
         this.releaseDate = releaseDate;
     }
 
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getShortDescription() {
+        return shortDescription;
+    }
+
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
+    }
+
     public Double getUserReviews() {
         return userReviews;
     }
@@ -86,6 +116,14 @@ public class Game {
 
     public void setCriticsReviews(Double criticsReviews) {
         this.criticsReviews = criticsReviews;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl = backgroundImageUrl;
     }
 
     public Publisher getPublisher() {
@@ -110,6 +148,7 @@ public class Game {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", releaseDate=" + releaseDate +
+                ", genre=" + genre +
                 ", userReviews=" + userReviews +
                 ", criticsReviews=" + criticsReviews +
                 ", publisher=" + publisher +

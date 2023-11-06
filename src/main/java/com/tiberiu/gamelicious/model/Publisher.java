@@ -17,6 +17,9 @@ public class Publisher {
     private String name;
 
     @Column
+    private String backgroundImageUrl;
+
+    @Column
     private String email;
 
     @OneToMany(mappedBy = "publisher",
@@ -41,6 +44,14 @@ public class Publisher {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl = backgroundImageUrl;
     }
 
     public String getEmail() {
