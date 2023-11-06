@@ -18,6 +18,7 @@ public class GameMapper {
         gameDto.setUserReviews(game.getUserReviews());
         gameDto.setCriticsReviews(game.getUserReviews());
         gameDto.setBackgroundImageUrl(game.getBackgroundImageUrl());
+        gameDto.setShortDescription(game.getShortDescription());
 
         if (game.getPublisher() != null) {
             gameDto.setPublisherDto(PublisherMapper.convert(game.getPublisher()));

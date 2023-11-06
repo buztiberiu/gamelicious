@@ -16,6 +16,7 @@ public class GameDto {
     private Double criticsReviews;
     private String backgroundImageUrl;
 
+
     private PublisherDto publisherDto;
     private DeveloperDto developerDto;
 

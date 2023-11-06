@@ -163,13 +163,11 @@ public class GameService {
                 Optional<Game> optionalGame = gameRepository.findGameByName(rawgGameDto.getName());
                 if (optionalGame.isPresent()) {
                     Game game = optionalGame.get();
-                    game.setBackgroundImageUrl(rawgGameDto.getBackground_image());
-                    game.setReleaseDate(LocalDate.parse(rawgGameDto.getReleased()));
                     game.setUserReviews(rawgGameDto.getRating());
                     gameRepository.save(game);
                     gameDtos.add(GameMapper.convert(game));
                 } else {
-                    gameDtos.add(createGame(rawgGameDto.getReleased(),
+                    gameDtos.add(createGame(rawgGameDto.getName(), rawgGameDto.getReleased(),
                             rawgGameDto.getRating(), rawgGameDto.getBackground_image()));
                 }
             }
@@ -186,42 +184,44 @@ public class GameService {
         if (freeToGameDto != null) {
             for (FreeToGameDto gameDto : freeToGameDto) {
 
-                if (gameRepository.findGameByName(gameDto.getTitle()).isPresent()) {
-                    continue;
-                }
-
-                Game game = new Game();
-                game.setName(gameDto.getTitle());
-                try {
-                    game.setReleaseDate(LocalDate.parse(gameDto.getRelease_date()));
-                } catch (DateTimeException e) {
-                    game.setReleaseDate(null);
-                }
-                game.setBackgroundImageUrl(gameDto.getThumbnail());
-                game.setGenre(gameDto.getGenre());
-
-                if (gameDto.getShort_description().length() >= 255) {
-                    game.setShortDescription(gameDto.getShort_description().substring(0,255));
+                Optional<Game> optionalGame = gameRepository.findGameByName(gameDto.getTitle());
+                if (optionalGame.isPresent()) {
+                    Game game = optionalGame.get();
+                    gameRepository.save(game);
+                    gameDtos.add(GameMapper.convert(game));
                 } else {
-                    game.setShortDescription(gameDto.getShort_description());
-                }
+                    Game game = new Game();
+                    game.setName(gameDto.getTitle());
+                    try {
+                        game.setReleaseDate(LocalDate.parse(gameDto.getRelease_date()));
+                    } catch (DateTimeException e) {
+                        game.setReleaseDate(null);
+                    }
+                    game.setBackgroundImageUrl(gameDto.getThumbnail());
+                    game.setGenre(gameDto.getGenre());
 
-                Optional<Publisher> publisherOptional = publisherRepository.findPublisherByName(gameDto.getPublisher());
-                if (publisherOptional.isEmpty()) {
-                    Publisher publisher = new Publisher();
-                    publisher.setName(gameDto.getPublisher());
-                    game.setPublisher(publisher);
-                }
+                    if (gameDto.getShort_description().length() >= 255) {
+                        game.setShortDescription(gameDto.getShort_description().substring(0,255));
+                    } else {
+                        game.setShortDescription(gameDto.getShort_description());
+                    }
 
-                Optional<Developer> developerOptional = developerRepository.findDeveloperByName(gameDto.getDeveloper());
-                if (developerOptional.isEmpty()) {
-                    Developer developer = new Developer();
-                    developer.setName(gameDto.getDeveloper());
-                    game.setDeveloper(developer);
-                }
+                    Optional<Publisher> publisherOptional = publisherRepository.findPublisherByName(gameDto.getPublisher());
+                    if (publisherOptional.isEmpty()) {
+                        Publisher publisher = new Publisher();
+                        publisher.setName(gameDto.getPublisher());
+                        game.setPublisher(publisher);
+                    }
 
-                gameDtos.add(GameMapper.convert(game));
-                addNewGame(game);
+                    Optional<Developer> developerOptional = developerRepository.findDeveloperByName(gameDto.getDeveloper());
+                    if (developerOptional.isEmpty()) {
+                        Developer developer = new Developer();
+                        developer.setName(gameDto.getDeveloper());
+                        game.setDeveloper(developer);
+                    }
+
+                    gameDtos.add((addNewGame(game)));
+                }
             }
         }
         return gameDtos;
@@ -242,8 +242,9 @@ public class GameService {
         return gameDtos;
     }
 
-    private GameDto createGame(String releaseDate, Double rating, String backgroundImage) {
+    private GameDto createGame(String name, String releaseDate, Double rating, String backgroundImage) {
         Game createdGame = new Game();
+        createdGame.setName(name);
         createdGame.setReleaseDate(LocalDate.parse(releaseDate));
         createdGame.setUserReviews(rating);
         createdGame.setBackgroundImageUrl(backgroundImage);
